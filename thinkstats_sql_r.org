@@ -46,12 +46,19 @@
 
      #+begin_src sh
      # switch to postgres (Linux) user 
+
      sudo -i -u postgres
+
      # create database super user
+
      createuser -s -U postgres
+
      # Enter name of role to add: 
+
      bpmuckian # <-- my Linux login
+
      exit # <-- from the postgres shell, now your back at your own shell
+
      createdb thinkstats
      #+end_src
      
@@ -59,23 +66,31 @@
      this will be a scratch pad area not intended to be under source control
      #+begin_src sh
      mkdir tmp
+
      echo '*' > tmp/.gitignore
      #+end_src     
      
    - [X] retrieve original thinkstats python source 
      #+begin_src sh
      cd tmp
+
      svn checkout http://thinkstats.googlecode.com/svn/trunk/ thinkstats-read-only
+
      wget http://greenteapress.com/thinkstats/thinkstats.pdf
+
      cd ..
      #+end_src
      
    - [X] create directories in the project root
      #+begin_src sh
      mkdir data
+
      mkdir r
+
      mkdir sh
+
      mkdir sql
+
      echo "this directory holds data downloaded from other sources, generally, nothing here should reside under source control" > data/README
     #+end_src
      
