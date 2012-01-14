@@ -19,20 +19,77 @@
 
    The R scripts and functions will be designed to be reusable for arbitrary sets of data, written to interface with an ODBC connection to any relational database.  We will be developing primarily against a PostgreSQL database and secondarily Microsoft SQL Server.  There will be an absolute minimum amount of SQL maintained within the R scripts. 
 
-   As this is a derivitave work of an original (copyright 2010 Allen B. Downey) which has been licensed [[http://www.gnu.org/licenses/gpl.html][GNU GPLv3]], this work too is licensed the same.
+   As this is a derivitave work of an original (copyright 2010 Allen B. Downey) which has been licensed [[http://www.gnu.org/licenses/gpl.html][GNU GPLv3]], this work too is licensed the same (copyright 2011 Brian P. Muckian)
+   
+   - assumptions
+     - unless otherwise noted, the project root is the current working directory prior to executing any commands
+     - PostgreSQL software [[https://wiki.archlinux.org/index.php/PostgreSQL][installed]] and running
+     - sudo is [[https://wiki.archlinux.org/index.php/Sudo][installed]] and the user is able to switch to the postgres user 
 
 ** resources 
 
+   - [[http://orgmode.org/org-mode-documentation.html][Org-Mode: Documentation]]
    - [[http://greenteapress.com/manifesto.html][The Textbook Manifesto]]
    - [[http://greenteapress.com/thinkstats/]["Think Stats: Probability and Statistics for Programmers"]]
    - [[http://www.gnu.org/licenses/quick-guide-gplv3.html][GNU GPLv3 License]]
    - [[http://www.postgresql.org/docs/9.1/interactive/index.html][PostgreSQL Documentation]]
    - [[http://cran.r-project.org/doc/manuals/R-intro.html][An Introduction to R]]   
 
-** action plan 
-   - [ ] create github repo with initial draft plan
-   - [ ] email A. Downey to inform of this effort
-   - [ ] prototype first few exercises
-   - [ ] design basic directory structure/framework
-   - [ ] capture resources necessary for installation, setup, database creation, odbc configuration, etc.
+** implementation
    
+*** action plan 
+   - [X] create github repo with initial draft plan
+     
+   - [X] setup, configuration, database creation, odbc, etc.
+     installing Linux and software specific to a distribution is outside the scope of this work.
+     switch to the postgres (Linux) user, create the database super user login (also named postgres) to the PostgreSQL server, add your regular Linux user account to the PostgreSQL super user role. (*NOTE*: I am terribly sorry that bits quite confusing, but I insist I did my best to make sense of it myself)
+
+     #+begin_src sh
+     # switch to postgres (Linux) user 
+     sudo -i -u postgres
+     # create database super user
+     createuser -s -U postgres
+     # Enter name of role to add: 
+     bpmuckian # <-- my Linux login
+     exit # <-- from the postgres shell, now your back at your own shell
+     createdb thinkstats
+     #+end_src
+     
+   - [X] in the project root, create tmp dir with .gitignore 
+     this will be a scratch pad area not intended to be under source control
+     #+begin_src sh
+     mkdir tmp
+     echo '*' > tmp/.gitignore
+     #+end_src     
+     
+   - [X] retrieve original thinkstats python source 
+     #+begin_src sh
+     cd tmp
+     svn checkout http://thinkstats.googlecode.com/svn/trunk/ thinkstats-read-only
+     wget http://greenteapress.com/thinkstats/thinkstats.pdf
+     cd ..
+     #+end_src
+     
+   - [X] create directories in the project root
+     #+begin_src sh
+     mkdir data
+     mkdir r
+     mkdir sh
+     mkdir sql
+     echo "this directory holds data downloaded from other sources, generally, nothing here should reside under source control" > data/README
+    #+end_src
+     
+   
+*** exercises
+    - *1.2*: download NSFG data and [[http://thinkstats.com/survey.py][survey.py]] 
+      - copy NSFG data from orginal source, assuming [[http://thinkstats.com/nsfg.html][terms accepted]]
+	#+begin_src sh
+	cp tmp/thinkstats-read-only/workspace/*gz* data/ 
+	#+end_src
+	
+      - extract data (with tar), parse (with awk), create and load table within postgresql database
+	
+      - query respondents
+    
+*** misc
+    - [ ] email A. Downey to inform of this effort
