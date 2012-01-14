@@ -1,0 +1,38 @@
+* Think Stats port to SQL and R
+** purpose 
+   
+   This project exists as a port, to SQL and R, of the (Python) exercise solutions and code examples delivered in [[http://greenteapress.com/thinkstats/]["Think Stats: Probability and Statistics for Programmers"]].
+
+** current state
+   
+   There exists a tremendous (and increasing) amount of domain specific data stored in relational databases, much of the initial gathering of data to prepare samples for statistical analysis simply must be written in SQL.
+
+   The R programming language is the defacto standard for statistical programming and provides a rich set of functions for analysis and visualization.  
+
+** considerations
+   
+   The emergence of data sciences as a discipline can be supported by a standardized approach to gathering and preparing data which can be consumed by reusable statistical functions that provide useful feedback to enable informed decisions.
+
+   In the course of translating the original code, it will be necessary to reorganize some of the resources.  For example, there may be a SQL directory separate from an R directory.  We will need to maintain a mapping in order to ensure complete coverage.
+
+   The results of the original code will serve as a suite of unit tests and allow us to validate the quality of our work.
+
+   The R scripts and functions will be designed to be reusable for arbitrary sets of data, written to interface with an ODBC connection to any relational database.  We will be developing primarily against a PostgreSQL database and secondarily Microsoft SQL Server.  There will be an absolute minimum amount of SQL maintained within the R scripts. 
+
+   As this is a derivitave work of an original (copyright 2010 Allen B. Downey) which has been licensed [[http://www.gnu.org/licenses/gpl.html][GNU GPLv3]], this work too is licensed the same.
+
+** resources 
+
+   - [[http://greenteapress.com/manifesto.html][The Textbook Manifesto]]
+   - [[http://greenteapress.com/thinkstats/]["Think Stats: Probability and Statistics for Programmers"]]
+   - [[http://www.gnu.org/licenses/quick-guide-gplv3.html][GNU GPLv3 License]]
+   - [[http://www.postgresql.org/docs/9.1/interactive/index.html][PostgreSQL Documentation]]
+   - [[http://cran.r-project.org/doc/manuals/R-intro.html][An Introduction to R]]   
+
+** action plan 
+   - [ ] create github repo with initial draft plan
+   - [ ] email A. Downey to inform of this effort
+   - [ ] prototype first few exercises
+   - [ ] design basic directory structure/framework
+   - [ ] capture resources necessary for installation, setup, database creation, odbc configuration, etc.
+   
