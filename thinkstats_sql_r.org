@@ -102,8 +102,47 @@
 	cp tmp/thinkstats-read-only/workspace/*gz* data/ 
 	#+end_src
 	
-      - extract data (with tar), parse (with awk), create and load table within postgresql database
+      - extract data (with gzip), parse (with awk) and generate csv
+        #+begin_src sh
+        gunzip -c data/2002FemPreg.dat.gz | 
+        awk '{
+          print FNR","\
+          substr($0,1,12)","\
+          substr($0,22,1)","\
+          substr($0,56,1)","\
+          substr(57,2)","\
+          substr($0,59,2)","\
+          substr($0,275,2)","\
+          substr($0,277,1)","\
+          substr($0,278,2)","\
+          substr($0,284,4)","\
+          substr($0,423,18)}' | 
+        sed 's/ *//g' > /tmp/2002FemPreg.csv
+        #+end_src
 	
+      - create and load table within postgresql database
+        #+begin_src sql
+        create table fem_preg_2002 (
+        id int,
+        caseid int,
+        nbrnaliv int,
+        babysex int,
+        birthwgt_lb int,
+        birthwgt_oz int,
+        prglength int,
+        outcome int,
+        birthord int,
+        agepreg int,
+        finalwgt float);
+        
+        copy fem_preg_2002 
+        from '/tmp/2002FemPreg.csv'
+        with delimiter ','
+        null as '';
+        #+end_src
+
+
+
       - query respondents
     
 *** misc
