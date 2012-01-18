@@ -234,6 +234,7 @@
           |-----------------------------|
           | Number of respondents 7643  |
           | Number of pregnancies 13593 |
+          |                             |
           |-----------------------------|
 	  
 
@@ -283,8 +284,10 @@
         | First babies 38.6009517335       |
         | Others 38.5229144667             |
         | Difference in days 0.54626086760 |
+        |                                  |
         |----------------------------------|
 
 *** misc
     - [ ] email A. Downey to inform of this effort
+    - [ ] separate exercises into separate org file
     - [ ] tangle and weave
