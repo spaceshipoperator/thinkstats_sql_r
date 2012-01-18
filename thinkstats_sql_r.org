@@ -15,19 +15,25 @@
 
    In the course of translating the original code, it will be necessary to reorganize some of the resources.  For example, there may be a SQL directory separate from an R directory.  We will need to maintain a mapping in order to ensure complete coverage.
 
-   The results of the original code will serve as a suite of unit tests and allow us to validate the quality of our work.
+   The original code will serve as a suite of unit tests and allow us to validate the quality of our work.
 
    The R scripts and functions will be designed to be reusable for arbitrary sets of data, written to interface with an ODBC connection to any relational database.  We will be developing primarily against a PostgreSQL database and secondarily Microsoft SQL Server.  There will be an absolute minimum amount of SQL maintained within the R scripts. 
+
+   All of the exercises will be translated following a reproduciple approach to research which will be implemented using literate programming techniques enabled by org-babel and org-mode in emacs.
+
+   Linux (specifically Arch) serves as the operating system for the development of this effort, however, this work should be portable to any other operating system.
 
    As this is a derivitave work of an original (copyright 2010 Allen B. Downey) which has been licensed [[http://www.gnu.org/licenses/gpl.html][GNU GPLv3]], this work too is licensed the same (copyright 2011 Brian P. Muckian)
    
    - assumptions
      - unless otherwise noted, the project root is the current working directory prior to executing any commands
-     - PostgreSQL software [[https://wiki.archlinux.org/index.php/PostgreSQL][installed]] and running
      - sudo is [[https://wiki.archlinux.org/index.php/Sudo][installed]] and the user is able to switch to the postgres user 
+     - PostgreSQL software [[https://wiki.archlinux.org/index.php/PostgreSQL][installed]] and running
+     - unixODBC and PostgreSQL ODBC driver are installed
 
 ** resources 
 
+   - a portable guide
    - [[http://orgmode.org/org-mode-documentation.html][Org-Mode: Documentation]]
    - [[http://greenteapress.com/manifesto.html][The Textbook Manifesto]]
    - [[http://greenteapress.com/thinkstats/]["Think Stats: Probability and Statistics for Programmers"]]
@@ -36,14 +42,12 @@
    - [[http://cran.r-project.org/doc/manuals/R-intro.html][An Introduction to R]]   
 
 ** implementation
-   
 *** action plan 
    - [X] create github repo with initial draft plan
      
-   - [X] setup, configuration, database creation, odbc, etc.
-     installing Linux and software specific to a distribution is outside the scope of this work.
+   - [X] create postgres database
+     
      switch to the postgres (Linux) user, create the database super user login (also named postgres) to the PostgreSQL server, add your regular Linux user account to the PostgreSQL super user role. (*NOTE*: I am terribly sorry that bits quite confusing, but I insist I did my best to make sense of it myself)
-
      #+begin_src sh
      # switch to postgres (Linux) user 
 
@@ -62,6 +66,57 @@
      createdb thinkstats
      #+end_src
      
+   - [X] create ODBC DSN 
+
+     add the following to a file in your home directory named .odbcinst.ini (*note* the preceeding dot)
+     #+begin_example
+     [PostgreSQL]
+     Description     = PostgreSQL driver for Arch
+     
+     Driver          = /usr/lib/psqlodbcw.so
+     
+     FileUsage       = 1
+     
+     #+end_example
+
+     add the following to a file in your home directory named .odbc.ini (*note* the preceeding dot)
+     #+begin_example
+     [thinkstats]
+     
+     Description         = Postgres thinkstats database
+     
+     Driver              = PostgreSQL
+     
+     Trace               = Yes
+     
+     TraceFile           = sql.log
+     
+     Database            = thinkstats
+     
+     Servername          = localhost
+     
+     UserName            =
+     
+     Password            =
+     
+     Port                = 5432
+     
+     Protocol            = 6.4
+     
+     ReadOnly            = No
+     
+     RowVersioning       = No
+     
+     ShowSystemTables    = No
+     
+     ShowOidColumn       = No
+     
+     FakeOidIndex        = No
+     
+     ConnSettings        =
+     
+     #+end_example
+    
    - [X] in the project root, create tmp dir with .gitignore 
      this will be a scratch pad area not intended to be under source control
      #+begin_src sh
@@ -94,7 +149,6 @@
      echo "this directory holds data downloaded from other sources, generally, nothing here should reside under source control" > data/README
     #+end_src
      
-   
 *** exercises
     - *1.2*: download NSFG data and [[http://thinkstats.com/survey.py][survey.py]] 
       - copy NSFG data from orginal source, assuming [[http://thinkstats.com/nsfg.html][terms accepted]]
@@ -103,47 +157,85 @@
 	#+end_src
 	
       - extract data (with gzip), parse (with awk) and generate csv
-        #+begin_src sh
-        gunzip -c data/2002FemPreg.dat.gz | 
-        awk '{
-          print FNR","\
-          substr($0,1,12)","\
-          substr($0,22,1)","\
-          substr($0,56,1)","\
-          substr(57,2)","\
-          substr($0,59,2)","\
-          substr($0,275,2)","\
-          substr($0,277,1)","\
-          substr($0,278,2)","\
-          substr($0,284,4)","\
-          substr($0,423,18)}' | 
-        sed 's/ *//g' > /tmp/2002FemPreg.csv
-        #+end_src
+	- *note*: the awk built-in variable [[http://www.math.utah.edu/docs/info/gawk_11.html][FNR]] provides the current record number, this value is used to populate an 'id' field in the subsequently created database tables, the 'id' will serve as a unique (candidate) key.
+
+	- 2002FemPreg.dat.gz
+          #+begin_src sh
+          gunzip -c data/2002FemPreg.dat.gz | 
+          awk '{
+            print FNR","\
+            substr($0,1,12)","\
+            substr($0,22,1)","\
+            substr($0,56,1)","\
+            substr(57,2)","\
+            substr($0,59,2)","\
+            substr($0,275,2)","\
+            substr($0,277,1)","\
+            substr($0,278,2)","\
+            substr($0,284,4)","\
+            substr($0,423,18)}' | 
+          sed 's/ *//g' > /tmp/2002FemPreg.csv
+          #+end_src
 	
+	- 2002FemResp.dat.gz
+          #+begin_src sh
+          gunzip -c data/2002FemResp.dat.gz | 
+          awk '{
+            print FNR","\
+            substr($0,1,12)}' | 
+	  sed 's/ *//g' > /tmp/2002FemResp.csv
+	  #+end_src
+ 	
       - create and load table within postgresql database
-        #+begin_src sql
-        create table fem_preg_2002 (
-        id int,
-        caseid int,
-        nbrnaliv int,
-        babysex int,
-        birthwgt_lb int,
-        birthwgt_oz int,
-        prglength int,
-        outcome int,
-        birthord int,
-        agepreg int,
-        finalwgt float);
+	- *note*: conventionally, table names cannot begin with a number
+	  
+	- fem_preg_2002 (for 2002FemPreg.dat.gz)
+          #+begin_src sql
+          create table fem_preg_2002 (
+          id int,
+          caseid int,
+          nbrnaliv int,
+          babysex int,
+          birthwgt_lb int,
+          birthwgt_oz int,
+          prglength int,
+          outcome int,
+          birthord int,
+          agepreg int,
+          finalwgt float);
         
-        copy fem_preg_2002 
-        from '/tmp/2002FemPreg.csv'
-        with delimiter ','
-        null as '';
-        #+end_src
+          copy fem_preg_2002 
+          from '/tmp/2002FemPreg.csv'
+          with delimiter ','
+          null as '';
+          #+end_src
+	  
+	- fem_resp_2002 (for 2002FemResp.dat.gz)
+          #+begin_src sql
+          create table fem_resp_2002 (
+          id int,
+	  caseid int);
+	  
+	  copy fem_resp_2002
+	  from '/tmp/2002FemResp.csv'
+	  with delimiter ','
+	  null as '';
+	  #+end_src
 
-
-
-      - query respondents
-    
+      - number of respondents and pregnancies
+	- query
+	  #+begin_src sql
+          select 'Number of respondents ' || count(1) results from fem_resp_2002
+          union
+          select 'Number of pregnancies ' || count(1) from fem_preg_2002;
+          #+end_src 
+	  
+	- results
+          |-----------------------------|
+          | Number of respondents 7643  |
+          | Number of pregnancies 13593 |
+          |-----------------------------|
+	
 *** misc
     - [ ] email A. Downey to inform of this effort
+    - [ ] tangle and weave
