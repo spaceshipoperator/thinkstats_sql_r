@@ -235,7 +235,56 @@
           | Number of respondents 7643  |
           | Number of pregnancies 13593 |
           |-----------------------------|
+	  
+
+    - *1.3*: explore pregnancies data
+      - query 
+	#+begin_src sql
+	with 
+	firsts as (
+	select
+	count(1) as count_births,
+	round(avg(prglength),10) mean_gestation
+	from fem_preg_2002
+	where outcome = 1
+	and birthord = 1),
+	others as (
+	select
+	count(1) as count_births,
+	round(avg(prglength),10) mean_gestation
+	from fem_preg_2002
+	where outcome = 1
+	and birthord != 1)
+	select 'Number of first babies ' || count_births as results
+	from firsts
+	union
+	select 'Number of others ' || count_births as results
+	from others
+	union
+	select 'Mean gestation in weeks: ' 
+	union 
+	select 'First babies ' || mean_gestation
+	from firsts
+	union 
+	select 'Others ' || mean_gestation
+	from others
+	union
+	select 'Difference in days ' || (f.mean_gestation - o.mean_gestation) * 7.0
+	from firsts f
+	join others o
+	on 1 = 1;
+        #+end_src
 	
+      - results
+        |----------------------------------|
+        | Number of first babies 4413      |
+        | Number of others 4735            |
+        | Mean gestation in weeks:         |
+        | First babies 38.6009517335       |
+        | Others 38.5229144667             |
+        | Difference in days 0.54626086760 |
+        |----------------------------------|
+
 *** misc
     - [ ] email A. Downey to inform of this effort
     - [ ] tangle and weave
