@@ -19,6 +19,8 @@
 
    The R scripts and functions will be designed to be reusable for arbitrary sets of data, written to interface with an ODBC connection to any relational database.  We will be developing primarily against a PostgreSQL database and secondarily Microsoft SQL Server.  There will be an absolute minimum amount of SQL maintained within the R scripts. 
 
+   There has been a deliberate choice to *not* take advantage of the [[http://www.joeconway.com/plr/][PL/R - R Procedural Language for PostgreSQL]] as the initial intent of this project is to produce ANSI SQL decoupled from R scripts and functions that can be used with any RDBMS platform.  Once this goal is met, the use of PL/R will be re-evaluated.
+
    All of the exercises will be translated following a reproduciple approach to research which will be implemented using literate programming techniques enabled by org-babel and org-mode in emacs.
 
    Linux (specifically Arch) serves as the operating system for the development of this effort, however, this work should be portable to any other operating system.
@@ -33,7 +35,7 @@
 
 ** resources 
 
-   - a portable guide
+   - [[https://github.com/spaceshipoperator/a_portable_guide][a portable guide]]
    - [[http://orgmode.org/org-mode-documentation.html][Org-Mode: Documentation]]
    - [[http://greenteapress.com/manifesto.html][The Textbook Manifesto]]
    - [[http://greenteapress.com/thinkstats/]["Think Stats: Probability and Statistics for Programmers"]]
@@ -150,6 +152,8 @@
     #+end_src
      
 *** exercises
+    - *1.1*: Although the NSFG has been conducted seven times, it is not a longitudinal study. Read the Wikipedia pages about [[http://wikipedia.org/wiki/Cross-sectional_study]["cross-sectional studies"]] and [[http://wikipedia.org/wiki/Longitudinal_study]["longitudinal studies"]] to make sure you understand why not.
+
     - *1.2*: download NSFG data and [[http://thinkstats.com/survey.py][survey.py]] 
       - copy NSFG data from orginal source, assuming [[http://thinkstats.com/nsfg.html][terms accepted]]
 	#+begin_src sh
@@ -237,7 +241,6 @@
           |                             |
           |-----------------------------|
 	  
-
     - *1.3*: explore pregnancies data
       - query 
 	#+begin_src sql
@@ -286,8 +289,149 @@
         | Difference in days 0.54626086760 |
         |                                  |
         |----------------------------------|
+	
+    - *1.4*: The best way to learn about statistics is to work on a project you are interested in. Is there a question like, “Do first babies arrive late,” that you would like to investigate?
+      
+    - *2.1*: compute the mean, variance and standard deviation of pumpkins
+      *note*: regexp_split_to_table is non-ANSI, PostgreSQL specific, there is similar capability available to other RDBMS.  Consider writing a custom funtion based on this example (ie, given list return table with mean, standard deviation, variance)
+      - query
+        #+begin_src sql
+        with st as (
+        select regexp_split_to_table::float val
+        from regexp_split_to_table('1,1,1,3,3,591', ','))
+        select 
+        'Mean' measure, 
+        avg(val) result
+        from st
+        union
+        select 
+        'Variance', 
+        avg((val - 100)^2) 
+        from st
+        union 
+        select 
+        'Standard Deviation', 
+        round(stddev(val)::numeric, 10)
+        from st
+        #+end_src
+	
+      - results
+        |--------------------+---------------|
+        | Mean               |           100 |
+        | Variance           |         48217 |
+        | Standard Deviation | 240.541888244 |
+        |                    |               |
+        |--------------------+---------------|
+	
+      - further investigation
+	determine why PostgreSQL variance function returns different results (perhaps sample variance?)
+	- query
+	  #+begin_src sql
+          select variance(regexp_split_to_table::float) val
+          from regexp_split_to_table('1,1,1,3,3,591', ',');
+          #+end_src
+
+	- results
+          |---------|
+          | 57860.4 |
+          |         |
+          |---------|
+	  
+    - *2.2*: compute standard deviation of gestation time for first babies and others
+      - re: survey.py and first.py
+	
+      - query
+	#+begin_src sql
+	select 
+	'First: ' baby, 
+	round(stddev(prglength), 10) stddev_of_gestation
+	from fem_preg_2002
+	where outcome = 1
+	and birthord = 1
+	union
+	select
+	'Other: ', 
+	round(stddev(prglength), 10) 
+	from fem_preg_2002
+	where outcome = 1
+	and birthord != 1;
+        #+end_src
+		
+      - results
+        |--------+--------------|
+        | First: | 2.7919014147 |
+        | Other: | 2.6158523504 |
+        |        |              |
+        |--------+--------------|
+
+      - questions and comments
+        - Does it look like the spread is the same for the two groups?
+	- How big is the difference in the means compared to these standard deviations?
+	- What does this comparison suggest about the statistical significance of the difference?
+	  
+    - *2.3*: given list of values, find mode of frequency distribution
+
+      - query
+	#+begin_src sql
+        select regexp_split_to_table v, count(1) f 
+        from regexp_split_to_table('1,1,1,2,3,3,3,3,4,5,6,6', ',') 
+        group by regexp_split_to_table order by 2 desc, 1 asc limit 1;
+	#+end_src
+	
+      - results
+        |---+---|
+        | 3 | 4 |
+        |---+---|
+	
+      - questions and comments
+	- need to confirm understanding of [[http://wikipedia.org/wiki/Mode_(statistics)][Mode]]; what if multiple values have the same frequency?
+	  
+    - *2.4*: 
 
 *** misc
     - [ ] email A. Downey to inform of this effort
-    - [ ] separate exercises into separate org file
-    - [ ] tangle and weave
+    - [ ] separate exercises into separate org file (and link to it)
+    - [ ] tangle and weave in order to produce R scripts that can run independently of orgmode (as it wraps up some magic such as creating the png files)
+      
+**** examples/snippets
+     - histogram (re: chapter 2.5)
+       - examples from [[http://had.co.nz/ggplot2/geom_histogram.html][ggplot2 online documentation]]
+
+       #+begin_src R :results output graphics :file images/movies.png
+         library(ggplot2)
+         qplot(rating, data=movies, geom="histogram")
+       #+end_src
+
+       #+results:
+       [[file:images/movies.png]]
+
+     - birth order histogram
+       #+begin_src R :results output graphics :file images/birth_order_histogram.png
+         library("RODBC")
+         library("ggplot2")
+  
+         channel <- odbcConnect(
+           dsn="thinkstats")
+  
+         dat <- sqlQuery(
+           channel, 
+           paste("
+             select 
+             case 
+               when birthord = 1 
+               then 'first' 
+               else 'other' 
+             end as birth_order, 
+             prglength pregnancy_length
+             from fem_preg_2002"))
+ 
+         hist <- ggplot(dat, aes(x=pregnancy_length, fill=birth_order)) 
+         hist + geom_bar(position="dodge")
+       #+end_src
+
+       #+results:
+       [[file:images/birth_order_histogram.png]]
+
+
+      
+      
