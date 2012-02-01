@@ -1,3 +1,4 @@
+#+BABEL: :session *R* :cache yes :results output graphics :exports both :tangle yes 
 * Think Stats port to SQL and R
 ** purpose 
    
@@ -394,7 +395,7 @@
     - [ ] tangle and weave in order to produce R scripts that can run independently of orgmode (as it wraps up some magic such as creating the png files)
       
 **** examples/snippets
-     - histogram (re: chapter 2.5)
+     - histogram 
        - examples from [[http://had.co.nz/ggplot2/geom_histogram.html][ggplot2 online documentation]]
 
        #+begin_src R :results output graphics :file images/movies.png
@@ -405,8 +406,8 @@
        #+results:
        [[file:images/movies.png]]
 
-     - birth order histogram
-       #+begin_src R :results output graphics :file images/birth_order_histogram.png
+     - birth order histogram (re: chapter 2.5)
+       #+begin_src R :session *R* :results output silent
          library("RODBC")
          library("ggplot2")
   
@@ -423,15 +424,22 @@
                else 'other' 
              end as birth_order, 
              prglength pregnancy_length
-             from fem_preg_2002"))
- 
+             from fem_preg_2002
+             where prglength >= 20"))
+       #+end_src
+
+       #+begin_src R :session *R* :results output graphics :file images/birth_order_histogram_compare.png
          hist <- ggplot(dat, aes(x=pregnancy_length, fill=birth_order)) 
-         hist + geom_bar(position="dodge")
+         hist + geom_histogram(position="dodge")
        #+end_src
 
        #+results:
-       [[file:images/birth_order_histogram.png]]
+       [[file:images/birth_order_histogram_compare.png]]
 
+     - birth order probability mass function
+       #+begin_src R :session *R* :results output graphics :file images/birth_order_probability_mass_function_compare.png
+         hist + geom_histogram(position="dodge", aes(y = ..density..)) + ylab('probability')
+       #+end_src
 
-      
-      
+       #+results:
+       [[file:images/birth_order_probability_mass_function_compare.png]]
