@@ -397,14 +397,13 @@
 **** examples/snippets
      - histogram 
        - examples from [[http://had.co.nz/ggplot2/geom_histogram.html][ggplot2 online documentation]]
+         #+begin_src R :results output graphics :file images/movies.png
+           library(ggplot2)
+           qplot(rating, data=movies, geom="histogram")
+         #+end_src
 
-       #+begin_src R :results output graphics :file images/movies.png
-         library(ggplot2)
-         qplot(rating, data=movies, geom="histogram")
-       #+end_src
-
-       #+results:
-       [[file:images/movies.png]]
+         #+results:
+         [[file:images/movies.png]]
 
      - birth order histogram (re: chapter 2.5)
        #+begin_src R :session *R* :results output silent
@@ -436,10 +435,54 @@
        #+results:
        [[file:images/birth_order_histogram_compare.png]]
 
-     - birth order probability mass function
+     - birth order probability mass function (PMF)
        #+begin_src R :session *R* :results output graphics :file images/birth_order_probability_mass_function_compare.png
          hist + geom_histogram(position="dodge", aes(y = ..density..)) + ylab('probability')
        #+end_src
 
        #+results:
        [[file:images/birth_order_probability_mass_function_compare.png]]
+
+     - birth order difference between first babies PMF and others
+       #+begin_src R :session *R* :results output graphics :file images/birth_order_probability_mass_function_difference.png
+         library(sqldf)
+         
+         zdat <- sqldf("
+           select *
+           from dat
+           where pregnancy_length > 34
+           and pregnancy_length < 46")
+         
+         fdat <- sqldf("
+           select
+           pregnancy_length,
+           count(1) c
+           from zdat
+           where birth_order = 'first'
+           group by pregnancy_length")
+         
+         odat <- sqldf("
+           select
+           pregnancy_length,
+           count(1) c
+           from zdat
+           where birth_order = 'other'
+           group by pregnancy_length")
+         
+         n <- nrow(zdat)
+         
+         ddat <- fn$sqldf("
+           select
+           f.pregnancy_length,
+           100*(cast(f.c - o.c as real)/ $n) p
+           from fdat f
+           join odat o
+           on f.pregnancy_length = o.pregnancy_length")
+         
+         dhist <- ggplot(ddat, aes(pregnancy_length, p)) 
+         dhist + geom_histogram(stat = "identity", fill="blue")
+       #+end_src
+
+       #+results:
+       [[file:images/birth_order_probability_mass_function_difference.png]]
+
